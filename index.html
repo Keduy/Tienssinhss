@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tiensinhsss — Cinema & Video Hub</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --surface: #131c31;
+      --surface-2: #1b2742;
+      --border: #2a3a5e;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --discord: #5865f2;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text); min-height: 100vh; }
+    header {
+      background: rgba(19, 28, 49, 0.96);
+      padding: 12px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand { font-size: 1.3rem; font-weight: 800; color: var(--accent); text-decoration: none; }
+    #form { flex: 1; min-width: 190px; max-width: 400px; }
+    .search {
+      width: 100%; padding: 9px 14px; border-radius: 999px;
+      border: 1px solid var(--border); background: var(--bg); color: var(--text); outline: none;
+    }
+    .search:focus { border-color: var(--accent); }
+    .user-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    button, .discord-btn {
+      padding: 8px 13px; border-radius: 8px; border: 1px solid transparent;
+      font-weight: 600; font-size: 0.88rem; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center;
+    }
+    button { background: var(--accent-hover); color: #fff; }
+    button:hover { background: #0369a1; }
+    button.secondary { background: var(--surface-2); border-color: var(--border); color: var(--text); }
+    button.danger { background: rgba(239, 68, 68, 0.16); border-color: rgba(239, 68, 68, 0.45); color: #fca5a5; }
+    .discord-btn { background: var(--discord); color: #fff; }
+    .discord-btn:hover { filter: brightness(1.08); }
+
+    .container { max-width: 1160px; margin: 18px auto; padding: 0 16px 36px; }
+    .panel {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 15px; margin-bottom: 16px;
+    }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+    .field {
+      width: 100%; padding: 10px 12px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--bg); color: var(--text);
+    }
+    .hint { font-size: 0.82rem; color: var(--muted); }
+    .status { margin-top: 8px; font-size: 0.88rem; color: var(--accent); min-height: 1.2em; }
+
+    #tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .tag {
+      padding: 6px 12px; border-radius: 999px; background: var(--surface);
+      border: 1px solid var(--border); color: var(--muted); font-size: 0.84rem; font-weight: 600; cursor: pointer;
+    }
+    .tag.active, .tag:hover { background: var(--accent-hover); border-color: var(--accent); color: #fff; }
+
+    #main { display: grid; grid-template-columns: repeat(auto-fill, minmax(285px, 1fr)); gap: 16px; }
+    .movie-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden; display: flex; flex-direction: column;
+    }
+    .player-wrap { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; }
+    .player-wrap.vertical { aspect-ratio: 9 / 14; max-height: 420px; margin: 0 auto; }
+    .player-wrap video, .player-wrap iframe { width: 100%; height: 100%; border: 0; display: block; }
+    .movie-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+    .movie-title { margin: 0; font-size: 1rem; font-weight: 700; }
+    .movie-meta { font-size: 0.8rem; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+    .card-actions { margin-top: auto; padding-top: 6px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .card-actions button { padding: 6px 10px; font-size: 0.82rem; }
+
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 24px; }
+    .page, .current {
+      padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); font-size: 0.9rem;
+    }
+    .page { cursor: pointer; font-weight: 600; }
+    .page.disabled { opacity: 0.45; pointer-events: none; }
+    .current { background: var(--accent-hover); border-color: var(--accent); color: #fff; font-weight: 700; }
+
+    .overlay {
+      height: 100%; width: 0; position: fixed; z-index: 50; left: 0; top: 0;
+      background-color: rgba(5, 9, 20, 0.94); overflow-x: hidden; transition: 0.25s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .overlay-content {
+      width: min(860px, 92vw); max-height: 88vh; overflow-y: auto;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px;
+    }
+    .overlay .closebtn { position: fixed; top: 14px; right: 22px; font-size: 36px; color: #fff; text-decoration: none; z-index: 60; }
+    .overlay .arrow {
+      position: fixed; top: 50%; transform: translateY(-50%); font-size: 26px; color: #fff;
+      text-decoration: none; background: rgba(30, 41, 59, 0.85); padding: 8px 14px; border-radius: 8px; z-index: 60;
+    }
+    .left-arrow { left: 14px; }
+    .right-arrow { right: 14px; }
+    .empty-msg { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 34px 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="brand" href="#top">Tiensinhsss</a>
+    <form id="form" onsubmit="return false;">
+      <input type="text" placeholder="Tìm tên video hoặc thể loại..." id="search" class="search" />
+    </form>
+    <div class="user-bar">
+      <a class="discord-btn" href="https://discord.gg/JVBGbF9XJq" target="_blank" rel="noopener noreferrer">Nhóm Discord</a>
+      <div id="authArea" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <button id="loginBtn">Đăng nhập Google</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="panel" id="uploadSection" style="display:none;">
+      <h3 style="margin:0 0 12px;">Thêm video / link nhúng mới</h3>
+      <div class="form-grid">
+        <input id="videoTitle" class="field" type="text" placeholder="Tên video / phim *" />
+        <input id="videoTag" class="field" type="text" placeholder="Nhãn / thể loại (vd: Hoạt hình, Short...)" />
+        <input id="videoUrl" class="field" type="url" placeholder="Link .mp4 hoặc link nhúng (YouTube, TikTok...) *" />
+      </div>
+      <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <button id="publishBtn">Đăng lên Tiensinhsss</button>
+        <span class="hint">Link .mp4/.webm phát trực tiếp gọn nhẹ; link nhúng dùng khung tương thích.</span>
+      </div>
+      <div class="status" id="uploadStatus"></div>
+    </div>
+
+    <div class="panel" id="guestNotice" style="color:var(--muted);font-size:0.92rem;">
+      Đăng nhập Google ở góc trên để thêm hoặc xóa video. Muốn giao lưu trực tiếp thì bấm nút <strong>Nhóm Discord</strong> ở thanh trên cùng.
+    </div>
+
+    <div id="tags"></div>
+    <main id="main"></main>
+
+    <div class="pagination">
+      <div class="page" id="prev">Trang trước</div>
+      <div class="current" id="current">1</div>
+      <div class="page" id="next">Trang sau</div>
+    </div>
+  </div>
+
+  <div id="myNav" class="overlay">
+    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+    <div class="overlay-content" id="overlay-content"></div>
+    <a href="javascript:void(0)" class="arrow left-arrow" id="left-arrow">&#8656;</a>
+    <a href="javascript:void(0)" class="arrow right-arrow" id="right-arrow">&#8658;</a>
+  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import {
+      getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import {
+      getFirestore, collection, addDoc, deleteDoc, doc, getDocs, query, orderBy, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAcKvdOCQOifuoaez-hFpmf6UtzV3HVnw4",
+      authDomain: "tiensinhsss.firebaseapp.com",
+      projectId: "tiensinhsss",
+      storageBucket: "tiensinhsss.firebasestorage.app",
+      messagingSenderId: "293643410016",
+      appId: "1:293643410016:web:009dc2495b0c8ea1e50105",
+      measurementId: "G-4PW26Q9P0J"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    const PAGE_SIZE = 9;
+    const DEFAULT_TAGS = ["Tất cả", "3D / Hoạt hình", "TikTok / Short", "Giải trí", "Khác"];
+
+    const authArea = document.getElementById("authArea");
+    const uploadSection = document.getElementById("uploadSection");
+    const guestNotice = document.getElementById("guestNotice");
+    const searchInput = document.getElementById("search");
+    const tagsEl = document.getElementById("tags");
+    const mainEl = document.getElementById("main");
+    const prevBtn = document.getElementById("prev");
+    const nextBtn = document.getElementById("next");
+    const currentEl = document.getElementById("current");
+    const overlayEl = document.getElementById("myNav");
+    const overlayContentEl = document.getElementById("overlay-content");
+    const leftArrow = document.getElementById("left-arrow");
+    const rightArrow = document.getElementById("right-arrow");
+
+    let currentUser = null;
+    let allVideos = [];
+    let filteredVideos = [];
+    let selectedTag = "Tất cả";
+    let currentPage = 1;
+    let overlayIndex = 0;
+
+    function normalizeMediaUrl(rawUrl) {
+      const trimmed = (rawUrl || "").trim();
+      const ttMatch = trimmed.match(/tiktok\.com\/(?:@[^/]+\/video\/|embed\/v2\/|v\/)(\d+)/i);
+      if (ttMatch && ttMatch[1]) {
+        return { url: `https://www.tiktok.com/embed/v2/${ttMatch[1]}`, isDirect: false, isVertical: true };
+      }
+      const ytMatch = trimmed.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+      if (ytMatch && ytMatch[1]) {
+        return { url: `https://www.youtube.com/embed/${ytMatch[1]}`, isDirect: false, isVertical: false };
+      }
+      const isDirect = /\.(mp4|webm|ogg)(\?.*)?$/i.test(trimmed);
+      const isVertical = /tiktok\.com\/embed\/v2\//i.test(trimmed);
+      return { url: trimmed, isDirect, isVertical };
+    }
+
+    function buildPlayerHtml(rawUrl, autoplay = false) {
+      const info = normalizeMediaUrl(rawUrl);
+      if (!info.url) return `<div class="player-wrap"></div>`;
+      const wrapClass = info.isVertical ? "player-wrap vertical" : "player-wrap";
+      const mediaTag = info.isDirect
+        ? `<video src="${info.url}" controls preload="metadata" ${autoplay ? "autoplay" : ""}></video>`
+        : `<iframe src="${info.url}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe>`;
+      return `<div class="${wrapClass}">${mediaTag}</div>`;
+    }
+
+    function renderAuthUI(user) {
+      currentUser = user;
+      if (user) {
+        uploadSection.style.display = "block";
+        guestNotice.style.display = "none";
+        authArea.innerHTML = `
+          <span style="font-size:0.84rem;color:#cbd5e1;">${user.displayName || user.email}</span>
+          <button class="secondary" id="logoutBtn">Đăng xuất</button>
+        `;
+        document.getElementById("logoutBtn").onclick = () => signOut(auth);
+      } else {
+        uploadSection.style.display = "none";
+        guestNotice.style.display = "block";
+        authArea.innerHTML = `<button id="loginBtn">Đăng nhập Google</button>`;
+        document.getElementById("loginBtn").onclick = async () => {
+          try {
+            await signInWithPopup(auth, provider);
+          } catch (err) {
+            alert("Lỗi đăng nhập: " + err.message);
+          }
+        };
+      }
+      applyFilters();
+    }
+
+    onAuthStateChanged(auth, renderAuthUI);
+
+    function renderTags() {
+      const dynamicTags = allVideos.map(v => (v.tag || "").trim()).filter(Boolean);
+      const tags = Array.from(new Set([...DEFAULT_TAGS, ...dynamicTags]));
+      tagsEl.innerHTML = tags.map(t => `<div class="${t === selectedTag ? "tag active" : "tag"}" data-tag="${t}">${t}</div>`).join("");
+      tagsEl.querySelectorAll(".tag").forEach(el => {
+        el.onclick = () => {
+          selectedTag = el.dataset.tag;
+          currentPage = 1;
+          renderTags();
+          applyFilters();
+        };
+      });
+    }
+
+    function applyFilters() {
+      const kw = searchInput.value.trim().toLowerCase();
+      filteredVideos = allVideos.filter(v => {
+        const title = (v.title || "").toLowerCase();
+        const tag = (v.tag || "Khác").trim();
+        const matchTag = selectedTag === "Tất cả" || tag.toLowerCase() === selectedTag.toLowerCase();
+        const matchKw = !kw || title.includes(kw) || tag.toLowerCase().includes(kw);
+        return matchTag && matchKw;
+      });
+      const totalPages = Math.max(1, Math.ceil(filteredVideos.length / PAGE_SIZE));
+      if (currentPage > totalPages) currentPage = totalPages;
+      renderPage(totalPages);
+    }
+
+    function renderPage(totalPages) {
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const items = filteredVideos.slice(start, start + PAGE_SIZE);
+      currentEl.textContent = `${currentPage} / ${totalPages}`;
+      prevBtn.classList.toggle("disabled", currentPage <= 1);
+      nextBtn.classList.toggle("disabled", currentPage >= totalPages);
+
+      if (!items.length) {
+        mainEl.innerHTML = `<div class="empty-msg">Chưa có video nào khớp với bộ lọc hiện tại.</div>`;
+        return;
+      }
+
+      mainEl.innerHTML = items.map((v, idx) => {
+        const globalIdx = start + idx;
+        const delBtn = currentUser
+          ? `<button class="danger" onclick="deleteVideo('${v.id}')">Xóa</button>`
+          : "";
+        return `
+          <article class="movie-card">
+            ${buildPlayerHtml(v.url, false)}
+            <div class="movie-body">
+              <h4 class="movie-title">${v.title || "Video không tên"}</h4>
+              <div class="movie-meta">
+                <span>${v.tag || "Khác"}</span>
+                <span>${v.author || "Thành viên"}</span>
+              </div>
+              <div class="card-actions">
+                <button class="secondary" onclick="openOverlay(${globalIdx})">Xem khung lớn</button>
+                ${delBtn}
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    window.deleteVideo = async function(videoId) {
+      if (!currentUser) {
+        alert("Vui lòng đăng nhập Google trước khi xóa.");
+        return;
+      }
+      if (!videoId || !confirm("Xóa video này khỏi Tiensinhsss?")) return;
+      try {
+        await deleteDoc(doc(db, "videos", videoId));
+        await loadVideos();
+      } catch (err) {
+        alert("Lỗi khi xóa: " + err.message);
+      }
+    };
+
+    function renderOverlayItem() {
+      if (!filteredVideos.length) return;
+      const item = filteredVideos[overlayIndex];
+      overlayContentEl.innerHTML = `
+        <h3 style="margin:0 0 12px;">${item.title || "Video"}</h3>
+        ${buildPlayerHtml(item.url, true)}
+        <div class="movie-meta" style="margin-top:12px;">
+          <span>Nhãn: ${item.tag || "Khác"}</span>
+          <span>Đăng bởi: ${item.author || "Thành viên"}</span>
+        </div>
+      `;
+    }
+
+    window.openOverlay = function(index) {
+      overlayIndex = Math.max(0, Math.min(index, filteredVideos.length - 1));
+      renderOverlayItem();
+      overlayEl.style.width = "100%";
+    };
+
+    window.closeNav = function() {
+      overlayEl.style.width = "0%";
+      overlayContentEl.innerHTML = "";
+    };
+
+    leftArrow.onclick = () => {
+      if (!filteredVideos.length) return;
+      overlayIndex = (overlayIndex - 1 + filteredVideos.length) % filteredVideos.length;
+      renderOverlayItem();
+    };
+
+    rightArrow.onclick = () => {
+      if (!filteredVideos.length) return;
+      overlayIndex = (overlayIndex + 1) % filteredVideos.length;
+      renderOverlayItem();
+    };
+
+    prevBtn.onclick = () => {
+      if (currentPage > 1) { currentPage--; applyFilters(); }
+    };
+
+    nextBtn.onclick = () => {
+      const totalPages = Math.max(1, Math.ceil(filteredVideos.length / PAGE_SIZE));
+      if (currentPage < totalPages) { currentPage++; applyFilters(); }
+    };
+
+    searchInput.addEventListener("input", () => {
+      currentPage = 1;
+      applyFilters();
+    });
+
+    document.getElementById("publishBtn").onclick = async () => {
+      const title = document.getElementById("videoTitle").value.trim();
+      const tag = document.getElementById("videoTag").value.trim() || "Khác";
+      const url = document.getElementById("videoUrl").value.trim();
+      const status = document.getElementById("uploadStatus");
+
+      if (!currentUser) { status.textContent = "Vui lòng đăng nhập Google trước."; return; }
+      if (!title || !url) { status.textContent = "Vui lòng nhập tên video và đường link."; return; }
+
+      try {
+        status.textContent = "Đang lưu video...";
+        await addDoc(collection(db, "videos"), {
+          title, tag, url,
+          author: currentUser.displayName || currentUser.email,
+          createdAt: serverTimestamp()
+        });
+        document.getElementById("videoTitle").value = "";
+        document.getElementById("videoTag").value = "";
+        document.getElementById("videoUrl").value = "";
+        status.textContent = "Đăng video thành công!";
+        await loadVideos();
+      } catch (err) {
+        status.textContent = "Lỗi khi đăng: " + err.message;
+      }
+    };
+
+    async function loadVideos() {
+      try {
+        const q = query(collection(db, "videos"), orderBy("createdAt", "desc"));
+        const snap = await getDocs(q);
+        allVideos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderTags();
+        applyFilters();
+      } catch (err) {
+        mainEl.innerHTML = `<div class="empty-msg" style="color:#f87171;">Không tải được danh sách: ${err.message}</div>`;
+      }
+    }
+
+    renderTags();
+    loadVideos();
+  </script>
+</body>
+</html>
