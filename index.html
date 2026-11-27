@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tiensinhsss — Cinema, Addon & Model Airi</title>
+  <style>
+    :root {
+      --bg: #0b1020; --surface: #131c31; --surface-2: #1b2742;
+      --border: #2a3a5e; --text: #f1f5f9; --muted: #94a3b8;
+      --accent: #38bdf8; --accent-hover: #0284c7; --discord: #5865f2;
+    }
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text); min-height: 100vh; }
+    header {
+      background: rgba(19, 28, 49, 0.96); padding: 12px 16px;
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+      justify-content: space-between; position: sticky; top: 0; z-index: 20;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .brand { font-size: 1.3rem; font-weight: 800; color: var(--accent); text-decoration: none; }
+    .nav-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+    .nav-tab {
+      padding: 7px 11px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--surface-2); color: var(--muted); font-weight: 700; font-size: 0.84rem; cursor: pointer;
+    }
+    .nav-tab.active { background: var(--accent-hover); border-color: var(--accent); color: #fff; }
+    .nav-tab.airi-tab.active { background: #be185d; border-color: #ec4899; color: #fff; }
+    #form { flex: 1; min-width: 180px; max-width: 360px; }
+    .search {
+      width: 100%; padding: 9px 14px; border-radius: 999px;
+      border: 1px solid var(--border); background: var(--bg); color: var(--text); outline: none;
+    }
+    .user-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    button, .discord-btn, .download-btn {
+      padding: 8px 13px; border-radius: 8px; border: 1px solid transparent;
+      font-weight: 600; font-size: 0.86rem; cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    button { background: var(--accent-hover); color: #fff; }
+    button.secondary { background: var(--surface-2); border-color: var(--border); color: var(--text); }
+    button.danger { background: rgba(239, 68, 68, 0.16); border-color: rgba(239, 68, 68, 0.45); color: #fca5a5; }
+    button.airi-btn { background: #db2777; color: #fff; }
+    .discord-btn { background: var(--discord); color: #fff; }
+    .download-btn { background: #16a34a; color: #fff; padding: 6px 12px; font-size: 0.82rem; }
+    .container { max-width: 1160px; margin: 18px auto; padding: 0 16px 36px; }
+    .panel {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 15px; margin-bottom: 16px;
+    }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+    .field {
+      width: 100%; padding: 10px 12px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--bg); color: var(--text);
+    }
+    .hint { font-size: 0.82rem; color: var(--muted); }
+    .status { margin-top: 8px; font-size: 0.88rem; color: var(--accent); min-height: 1.2em; }
+    #tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .tag {
+      padding: 6px 12px; border-radius: 999px; background: var(--surface);
+      border: 1px solid var(--border); color: var(--muted); font-size: 0.84rem; font-weight: 600; cursor: pointer;
+    }
+    .tag.active, .tag:hover { background: var(--accent-hover); border-color: var(--accent); color: #fff; }
+    #main { display: grid; grid-template-columns: repeat(auto-fill, minmax(285px, 1fr)); gap: 16px; }
+    .movie-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden; display: flex; flex-direction: column;
+    }
+    .player-wrap { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; }
+    .player-wrap.vertical { aspect-ratio: 9 / 14; max-height: 420px; margin: 0 auto; }
+    .player-wrap.airi-frame { aspect-ratio: 4 / 3; min-height: 420px; }
+    .custom-video-box { position: relative; width: 100%; height: 100%; background: #000; touch-action: none; user-select: none; }
+    .custom-video-box video { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+    .custom-controls {
+      position: absolute; left: 0; right: 0; bottom: 0; z-index: 5;
+      background: linear-gradient(transparent, rgba(0,0,0,0.88));
+      padding: 8px 10px; display: flex; align-items: center; gap: 10px;
+    }
+    .custom-controls button { padding: 4px 10px; font-size: 0.8rem; min-width: 58px; }
+    .custom-controls input[type="range"] { flex: 1; accent-color: var(--accent); cursor: pointer; }
+    .player-wrap iframe { width: 100%; height: 100%; border: 0; display: block; }
+    .addon-banner {
+      height: 115px; background: linear-gradient(135deg, #163020, #1e293b);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 12px; text-align: center; border-bottom: 1px solid var(--border);
+    }
+    .airi-banner {
+      height: 125px; background: linear-gradient(135deg, #4a1236, #1e1b4b);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 12px; text-align: center; border-bottom: 1px solid var(--border);
+    }
+    .addon-badge {
+      background: rgba(56, 189, 248, 0.16); color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.35); padding: 3px 10px;
+      border-radius: 999px; font-size: 0.76rem; font-weight: 700; margin-bottom: 6px;
+    }
+    .airi-badge {
+      background: rgba(236, 72, 153, 0.2); color: #f9a8d4;
+      border: 1px solid rgba(236, 72, 153, 0.45); padding: 3px 10px;
+      border-radius: 999px; font-size: 0.76rem; font-weight: 700; margin-bottom: 6px;
+    }
+    .movie-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+    .movie-title { margin: 0; font-size: 1rem; font-weight: 700; }
+    .movie-meta { font-size: 0.8rem; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+    .card-actions { margin-top: auto; padding-top: 6px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .card-actions button, .card-actions a { padding: 6px 10px; font-size: 0.82rem; }
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 24px; }
+    .page, .current {
+      padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); font-size: 0.9rem;
+    }
+    .page { cursor: pointer; font-weight: 600; }
+    .page.disabled { opacity: 0.45; pointer-events: none; }
+    .current { background: var(--accent-hover); border-color: var(--accent); color: #fff; font-weight: 700; }
+    .overlay {
+      height: 100%; width: 0; position: fixed; z-index: 50; left: 0; top: 0;
+      background-color: rgba(5, 9, 20, 0.94); overflow-x: hidden; transition: 0.25s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .overlay-content {
+      width: min(900px, 94vw); max-height: 90vh; overflow-y: auto;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px;
+    }
+    .overlay .closebtn { position: fixed; top: 14px; right: 22px; font-size: 36px; color: #fff; text-decoration: none; z-index: 60; }
+    .overlay .arrow {
+      position: fixed; top: 50%; transform: translateY(-50%); font-size: 26px; color: #fff;
+      text-decoration: none; background: rgba(30, 41, 59, 0.85); padding: 8px 14px; border-radius: 8px; z-index: 60;
+    }
+    .left-arrow { left: 14px; }
+    .right-arrow { right: 14px; }
+    .empty-msg { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 34px 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand-group">
+      <a class="brand" href="#top">Tiensinhsss</a>
+      <div class="nav-tabs">
+        <button type="button" class="nav-tab active" id="tabVideos">Video</button>
+        <button type="button" class="nav-tab" id="tabAddons">Addon MC</button>
+        <button type="button" class="nav-tab airi-tab" id="tabAiri">Model Airi</button>
+      </div>
+    </div>
+    <form id="form" onsubmit="return false;">
+      <input type="text" placeholder="Tìm tên video hoặc thể loại..." id="search" class="search" />
+    </form>
+    <div class="user-bar">
+      <a class="discord-btn" href="https://discord.gg/JVBGbF9XJq" target="_blank" rel="noopener noreferrer">Nhóm Discord</a>
+      <div id="authArea" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <button id="loginBtn">Đăng nhập Google</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="panel" id="uploadSection" style="display:none;">
+      <h3 style="margin:0 0 12px;">Thêm video / link nhúng mới</h3>
+      <div class="form-grid">
+        <input id="videoTitle" class="field" type="text" placeholder="Tên video / phim *" />
+        <input id="videoTag" class="field" type="text" placeholder="Nhãn / thể loại (vd: Hoạt hình, Short...)" />
+        <input id="videoUrl" class="field" type="url" placeholder="Link .mp4 hoặc link nhúng *" />
+      </div>
+      <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <button id="publishBtn">Đăng lên Tiensinhsss</button>
+        <span class="hint">Hỗ trợ link .mp4/.webm hoặc link nhúng.</span>
+      </div>
+      <div class="status" id="uploadStatus"></div>
+    </div>
+
+    <div class="panel" id="addonUploadSection" style="display:none;">
+      <h3 style="margin:0 0 12px;">Thêm Addon MC mới</h3>
+      <div class="form-grid">
+        <input id="addonTitle" class="field" type="text" placeholder="Tên Addon MC *" />
+        <input id="addonTag" class="field" type="text" placeholder="Thể loại (vd: Shader, Modpack, Map...)" />
+        <input id="addonUrl" class="field" type="url" placeholder="Link MediaFire, MEGA, Drive... *" />
+      </div>
+      <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <button id="publishAddonBtn" style="background:#16a34a;">Đăng Addon MC</button>
+        <span class="hint">Bấm tải trên thẻ sẽ mở thẳng trang MediaFire / MEGA.</span>
+      </div>
+      <div class="status" id="addonStatus"></div>
+    </div>
+
+    <div class="panel" id="airiUploadSection" style="display:none;">
+      <h3 style="margin:0 0 12px;">Thêm Model Airi mới</h3>
+      <div class="form-grid">
+        <input id="airiTitle" class="field" type="text" placeholder="Tên Model Airi *" />
+        <input id="airiTag" class="field" type="text" placeholder="Phân loại (vd: Live2D, 3D, AI...)" />
+        <input id="airiUrl" class="field" type="url" placeholder="Link chạy / nhúng Model Airi *" />
+      </div>
+      <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <button id="publishAiriBtn" class="airi-btn">Đăng Model Airi</button>
+        <span class="hint">Dán link web/embed chạy model Airi để mở trực tiếp trên web.</span>
+      </div>
+      <div class="status" id="airiStatus"></div>
+    </div>
+
+    <div class="panel" id="guestNotice" style="color:var(--muted);font-size:0.92rem;">
+      Đăng nhập Google ở góc trên để thêm hoặc xóa nội dung. Vào cộng đồng qua nút <strong>Nhóm Discord</strong>.
+    </div>
+
+    <div id="tags"></div>
+    <main id="main"></main>
+
+    <div class="pagination">
+      <div class="page" id="prev">Trang trước</div>
+      <div class="current" id="current">1</div>
+      <div class="page" id="next">Trang sau</div>
+    </div>
+  </div>
+
+  <div id="myNav" class="overlay">
+    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+    <div class="overlay-content" id="overlay-content"></div>
+    <a href="javascript:void(0)" class="arrow left-arrow" id="left-arrow">&#8656;</a>
+    <a href="javascript:void(0)" class="arrow right-arrow" id="right-arrow">&#8658;</a>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import {
+      getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import {
+      getFirestore, collection, addDoc, deleteDoc, doc, getDocs, query, orderBy, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAcKvdOCQOifuoaez-hFpmf6UtzV3HVnw4",
+      authDomain: "tiensinhsss.firebaseapp.com",
+      projectId: "tiensinhsss",
+      storageBucket: "tiensinhsss.firebasestorage.app",
+      messagingSenderId: "293643410016",
+      appId: "1:293643410016:web:009dc2495b0c8ea1e50105",
+      measurementId: "G-4PW26Q9P0J"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+    const PAGE_SIZE = 9;
+    const VIDEO_DEFAULT_TAGS = ["Tất cả", "3D / Hoạt hình", "TikTok / Short", "Giải trí", "Khác"];
+    const ADDON_DEFAULT_TAGS = ["Tất cả", "Shader", "Modpack", "Map", "Texture", "Khác"];
+    const AIRI_DEFAULT_TAGS = ["Tất cả", "Live2D", "3D Model", "AI / Chat", "Khác"];
+
+    const authArea = document.getElementById("authArea");
+    const uploadSection = document.getElementById("uploadSection");
+    const addonUploadSection = document.getElementById("addonUploadSection");
+    const airiUploadSection = document.getElementById("airiUploadSection");
+    const guestNotice = document.getElementById("guestNotice");
+    const tabVideos = document.getElementById("tabVideos");
+    const tabAddons = document.getElementById("tabAddons");
+    const tabAiri = document.getElementById("tabAiri");
+    const searchInput = document.getElementById("search");
+    const tagsEl = document.getElementById("tags");
+    const mainEl = document.getElementById("main");
+    const prevBtn = document.getElementById("prev");
+    const nextBtn = document.getElementById("next");
+    const currentEl = document.getElementById("current");
+    const overlayEl = document.getElementById("myNav");
+    const overlayContentEl = document.getElementById("overlay-content");
+    const leftArrow = document.getElementById("left-arrow");
+    const rightArrow = document.getElementById("right-arrow");
+
+    let currentUser = null, activeSection = "videos";
+    let allVideos = [], allAddons = [], allAiri = [], filteredItems = [];
+    let selectedTag = "Tất cả", currentPage = 1, overlayIndex = 0;
+
+    function normalizeMediaUrl(rawUrl) {
+      const trimmed = (rawUrl || "").trim();
+      const ttMatch = trimmed.match(/tiktok\.com\/(?:@[^/]+\/video\/|embed\/v2\/|v\/)(\d+)/i);
+      if (ttMatch && ttMatch[1]) {
+        return { url: `https://www.tiktok.com/embed/v2/${ttMatch[1]}`, isDirect: false, isVertical: true };
+      }
+      const ytMatch = trimmed.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+      if (ytMatch && ytMatch[1]) {
+        return { url: `https://www.youtube.com/embed/${ytMatch[1]}`, isDirect: false, isVertical: false };
+      }
+      const isDirect = /\.(mp4|webm|ogg)(\?.*)?$/i.test(trimmed);
+      const isVertical = /tiktok\.com\/embed\/v2\//i.test(trimmed);
+      return { url: trimmed, isDirect, isVertical };
+    }
+
+    function buildPlayerHtml(rawUrl, autoplay = false) {
+      const info = normalizeMediaUrl(rawUrl);
+      if (!info.url) return `<div class="player-wrap"></div>`;
+      const wrapClass = info.isVertical ? "player-wrap vertical" : "player-wrap";
+      const mediaTag = info.isDirect
+        ? `<div class="custom-video-box" ontouchmove="event.preventDefault()">
+             <video src="${info.url}" playsinline preload="metadata" ${autoplay ? "autoplay" : ""}
+               ontimeupdate="syncSeek(this)" onloadedmetadata="syncSeek(this)"></video>
+             <div class="custom-controls">
+               <button type="button" onclick="togglePlay(this)">${autoplay ? "Dừng" : "Phát"}</button>
+               <input type="range" min="0" max="100" step="0.1" value="0" oninput="seekVideo(this)" />
+             </div>
+           </div>`
+        : `<iframe src="${info.url}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe>`;
+      return `<div class="${wrapClass}">${mediaTag}</div>`;
+    }
+
+    window.togglePlay = function(btn) {
+      const v = btn.closest(".custom-video-box").querySelector("video");
+      if (v.paused) { v.play(); btn.textContent = "Dừng"; } else { v.pause(); btn.textContent = "Phát"; }
+    };
+
+    window.seekVideo = function(range) {
+      const v = range.closest(".custom-video-box").querySelector("video");
+      if (v.duration) v.currentTime = (range.value / 100) * v.duration;
+    };
+
+    window.syncSeek = function(v) {
+      const box = v.closest(".custom-video-box");
+      if (!box) return;
+      const range = box.querySelector('input[type="range"]');
+      const btn = box.querySelector("button");
+      if (v.duration && range) range.value = (v.currentTime / v.duration) * 100;
+      if (btn) btn.textContent = v.paused ? "Phát" : "Dừng";
+    };
+
+    function syncFormsVisibility() {
+      uploadSection.style.display = currentUser && activeSection === "videos" ? "block" : "none";
+      addonUploadSection.style.display = currentUser && activeSection === "addons" ? "block" : "none";
+      airiUploadSection.style.display = currentUser && activeSection === "airi" ? "block" : "none";
+      guestNotice.style.display = currentUser ? "none" : "block";
+    }
+
+    function renderAuthUI(user) {
+      currentUser = user;
+      if (user) {
+        authArea.innerHTML = `
+          <span style="font-size:0.84rem;color:#cbd5e1;">${user.displayName || user.email}</span>
+          <button class="secondary" id="logoutBtn">Đăng xuất</button>
+        `;
+        document.getElementById("logoutBtn").onclick = () => signOut(auth);
+      } else {
+        authArea.innerHTML = `<button id="loginBtn">Đăng nhập Google</button>`;
+        document.getElementById("loginBtn").onclick = async () => {
+          try { await signInWithPopup(auth, provider); }
+          catch (err) { alert("Lỗi đăng nhập: " + err.message); }
+        };
+      }
+      syncFormsVisibility();
+      applyFilters();
+    }
+
+    onAuthStateChanged(auth, renderAuthUI);
+
+    function switchSection(sec) {
+      activeSection = sec;
+      selectedTag = "Tất cả";
+      currentPage = 1;
+      searchInput.value = "";
+      searchInput.placeholder = sec === "videos" ? "Tìm tên video hoặc thể loại..."
+        : (sec === "addons" ? "Tìm tên Addon MC hoặc thể loại..." : "Tìm tên Model Airi hoặc phân loại...");
+      tabVideos.classList.toggle("active", sec === "videos");
+      tabAddons.classList.toggle("active", sec === "addons");
+      tabAiri.classList.toggle("active", sec === "airi");
+      syncFormsVisibility();
+      renderTags();
+      applyFilters();
+    }
+
+    tabVideos.onclick = () => switchSection("videos");
+    tabAddons.onclick = () => switchSection("addons");
+    tabAiri.onclick = () => switchSection("airi");
+
+    function getActiveList() {
+      return activeSection === "videos" ? allVideos : (activeSection === "addons" ? allAddons : allAiri);
+    }
+
+    function renderTags() {
+      const baseTags = activeSection === "videos" ? VIDEO_DEFAULT_TAGS
+        : (activeSection === "addons" ? ADDON_DEFAULT_TAGS : AIRI_DEFAULT_TAGS);
+      const dynamicTags = getActiveList().map(v => (v.tag || "").trim()).filter(Boolean);
+      const tags = Array.from(new Set([...baseTags, ...dynamicTags]));
+      tagsEl.innerHTML = tags.map(t => `<div class="${t === selectedTag ? "tag active" : "tag"}" data-tag="${t}">${t}</div>`).join("");
+      tagsEl.querySelectorAll(".tag").forEach(el => {
+        el.onclick = () => { selectedTag = el.dataset.tag; currentPage = 1; renderTags(); applyFilters(); };
+      });
+    }
+
+    function applyFilters() {
+      const kw = searchInput.value.trim().toLowerCase();
+      filteredItems = getActiveList().filter(v => {
+        const title = (v.title || "").toLowerCase();
+        const tag = (v.tag || "Khác").trim();
+        return (selectedTag === "Tất cả" || tag.toLowerCase() === selectedTag.toLowerCase())
+          && (!kw || title.includes(kw) || tag.toLowerCase().includes(kw));
+      });
+      const totalPages = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE));
+      if (currentPage > totalPages) currentPage = totalPages;
+      renderPage(totalPages);
+    }
+
+    function getHostLabel(url) {
+      if (/mediafire\.com/i.test(url)) return "MediaFire";
+      if (/mega\.nz/i.test(url)) return "MEGA";
+      if (/drive\.google\.com/i.test(url)) return "Google Drive";
+      return "Link ngoài";
+    }
+
+    function renderPage(totalPages) {
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const items = filteredItems.slice(start, start + PAGE_SIZE);
+      currentEl.textContent = `${currentPage} / ${totalPages}`;
+      prevBtn.classList.toggle("disabled", currentPage <= 1);
+      nextBtn.classList.toggle("disabled", currentPage >= totalPages);
+
+      if (!items.length) {
+        mainEl.innerHTML = `<div class="empty-msg">Chưa có nội dung nào khớp với bộ lọc hiện tại.</div>`;
+        return;
+      }
+
+      if (activeSection === "addons") {
+        mainEl.innerHTML = items.map(a => {
+          const delBtn = currentUser ? `<button class="danger" onclick="deleteItem('addons', '${a.id}')">Xóa</button>` : "";
+          const safeUrl = (a.url || "#").replace(/"/g, "&quot;");
+          return `<article class="movie-card"><div class="addon-banner"><span class="addon-badge">${a.tag || "Addon MC"}</span><strong style="font-size:1.05rem;color:#fff;">${a.title || "Addon không tên"}</strong></div><div class="movie-body"><div class="movie-meta"><span>Nguồn: ${getHostLabel(a.url || "")}</span><span>${a.author || "Thành viên"}</span></div><div class="card-actions"><a class="download-btn" href="${safeUrl}" target="_blank" rel="noopener noreferrer">Tải Addon</a>${delBtn}</div></div></article>`;
+        }).join("");
+        return;
+      }
+
+      if (activeSection === "airi") {
+        mainEl.innerHTML = items.map((m, idx) => {
+          const delBtn = currentUser ? `<button class="danger" onclick="deleteItem('airi_models', '${m.id}')">Xóa</button>` : "";
+          const safeUrl = (m.url || "#").replace(/"/g, "&quot;");
+          return `<article class="movie-card"><div class="airi-banner"><span class="airi-badge">${m.tag || "Model Airi"}</span><strong style="font-size:1.08rem;color:#fff;">${m.title || "Model Airi"}</strong></div><div class="movie-body"><div class="movie-meta"><span>Airi Interactive</span><span>${m.author || "Thành viên"}</span></div><div class="card-actions"><button class="airi-btn" onclick="openOverlay(${start + idx})">Chạy Model Airi</button><a class="secondary" style="padding:6px 10px;border-radius:8px;text-decoration:none;color:var(--text);border:1px solid var(--border);background:var(--surface-2);" href="${safeUrl}" target="_blank" rel="noopener noreferrer">Mở tab mới</a>${delBtn}</div></div></article>`;
+        }).join("");
+        return;
+      }
+
+      mainEl.innerHTML = items.map((v, idx) => {
+        const delBtn = currentUser ? `<button class="danger" onclick="deleteItem('videos', '${v.id}')">Xóa</button>` : "";
+        return `<article class="movie-card">${buildPlayerHtml(v.url, false)}<div class="movie-body"><h4 class="movie-title">${v.title || "Video không tên"}</h4><div class="movie-meta"><span>${v.tag || "Khác"}</span><span>${v.author || "Thành viên"}</span></div><div class="card-actions"><button class="secondary" onclick="openOverlay(${start + idx})">Xem khung lớn</button>${delBtn}</div></div></article>`;
+      }).join("");
+    }
+
+    window.deleteItem = async function(colName, docId) {
+      if (!currentUser) { alert("Vui lòng đăng nhập Google trước khi xóa."); return; }
+      if (!docId || !confirm("Bạn chắc chắn muốn xóa mục này?")) return;
+      try { await deleteDoc(doc(db, colName, docId)); await loadAllData(); }
+      catch (err) { alert("Lỗi khi xóa: " + err.message); }
+    };
+
+    function renderOverlayItem() {
+      if (!filteredItems.length || activeSection === "addons") return;
+      const item = filteredItems[overlayIndex];
+      if (activeSection === "airi") {
+        const safeUrl = (item.url || "").replace(/"/g, "&quot;");
+        overlayContentEl.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;"><h3 style="margin:0;">${item.title || "Model Airi"}</h3><a class="airi-btn" style="padding:6px 12px;border-radius:8px;text-decoration:none;color:#fff;background:#db2777;" href="${safeUrl}" target="_blank" rel="noopener noreferrer">Mở tab mới</a></div><div class="player-wrap airi-frame"><iframe src="${safeUrl}" allow="microphone; camera; autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div><div class="movie-meta" style="margin-top:12px;"><span>Phân loại: ${item.tag || "Model Airi"}</span><span>Đăng bởi: ${item.author || "Thành viên"}</span></div>`;
+        return;
+      }
+      overlayContentEl.innerHTML = `<h3 style="margin:0 0 12px;">${item.title || "Video"}</h3>${buildPlayerHtml(item.url, true)}<div class="movie-meta" style="margin-top:12px;"><span>Nhãn: ${item.tag || "Khác"}</span><span>Đăng bởi: ${item.author || "Thành viên"}</span></div>`;
+    }
+
+    window.openOverlay = function(i) { overlayIndex = Math.max(0, Math.min(i, filteredItems.length - 1)); renderOverlayItem(); overlayEl.style.width = "100%"; };
+    window.closeNav = function() { overlayEl.style.width = "0%"; overlayContentEl.innerHTML = ""; };
+    leftArrow.onclick = () => { if (filteredItems.length) { overlayIndex = (overlayIndex - 1 + filteredItems.length) % filteredItems.length; renderOverlayItem(); } };
+    rightArrow.onclick = () => { if (filteredItems.length) { overlayIndex = (overlayIndex + 1) % filteredItems.length; renderOverlayItem(); } };
+    prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; applyFilters(); } };
+    nextBtn.onclick = () => { const tp = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE)); if (currentPage < tp) { currentPage++; applyFilters(); } };
+    searchInput.addEventListener("input", () => { currentPage = 1; applyFilters(); });
+
+    async function handlePublish(colName, titleId, tagId, urlId, statusId, okMsg) {
+      const title = document.getElementById(titleId).value.trim();
+      const tag = document.getElementById(tagId).value.trim() || "Khác";
+      const url = document.getElementById(urlId).value.trim();
+      const status = document.getElementById(statusId);
+      if (!currentUser) { status.textContent = "Vui lòng đăng nhập Google trước."; return; }
+      if (!title || !url) { status.textContent = "Vui lòng nhập đầy đủ tên và đường link."; return; }
+      try {
+        status.textContent = "Đang lưu dữ liệu...";
+        await addDoc(collection(db, colName), { title, tag, url, author: currentUser.displayName || currentUser.email, createdAt: serverTimestamp() });
+        document.getElementById(titleId).value = ""; document.getElementById(tagId).value = ""; document.getElementById(urlId).value = "";
+        status.textContent = okMsg;
+        await loadAllData();
+      } catch (err) { status.textContent = "Lỗi khi đăng: " + err.message; }
+    }
+
+    document.getElementById("publishBtn").onclick = () => handlePublish("videos", "videoTitle", "videoTag", "videoUrl", "uploadStatus", "Đăng video thành công!");
+    document.getElementById("publishAddonBtn").onclick = () => handlePublish("addons", "addonTitle", "addonTag", "addonUrl", "addonStatus", "Đăng Addon MC thành công!");
+    document.getElementById("publishAiriBtn").onclick = () => handlePublish("airi_models", "airiTitle", "airiTag", "airiUrl", "airiStatus", "Đăng Model Airi thành công!");
+
+    async function loadAllData() {
+      try {
+        const [vSnap, aSnap, mSnap] = await Promise.all([
+          getDocs(query(collection(db, "videos"), orderBy("createdAt", "desc"))),
+          getDocs(query(collection(db, "addons"), orderBy("createdAt", "desc"))),
+          getDocs(query(collection(db, "airi_models"), orderBy("createdAt", "desc")))
+        ]);
+        allVideos = vSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        allAddons = aSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        allAiri = mSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderTags();
+        applyFilters();
+      } catch (err) {
+        mainEl.innerHTML = `<div class="empty-msg" style="color:#f87171;">Không tải được dữ liệu: ${err.message}</div>`;
+      }
+    }
+
+    renderTags();
+    loadAllData();
+  </script>
+</body>
+</html>
